@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8e9e6">
+  <title>口袋小伙伴 · 彩色像素宠物机</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="page">
+    <div class="page-kicker">✦ POCKET FRIENDS ✦</div>
+    <h1>口袋小伙伴</h1>
+    <p class="page-subtitle">和乌沙奇一起，照顾会变化的小小生命</p>
+    <div class="device" aria-label="像素宠物机">
+      <div class="shell-gloss" aria-hidden="true"></div>
+      <div class="shell-star star-left" aria-hidden="true">✿</div>
+      <div class="shell-star star-right" aria-hidden="true">✦</div>
+      <div class="brand">mini<span>pet</span><i>✦</i></div>
+      <div class="bezel">
+        <div class="screen" id="screen">
+          <div class="screen-top"><span id="screenTitle">口袋小伙伴</span><span id="screenMeta">第 1 天</span></div>
+          <div class="screen-view" id="screenView" aria-live="polite"></div>
+          <div class="screen-bottom"><span id="screenHint">◀ ▶ 选择 · ● 确认</span><span id="saveDot" title="自动存档">◆</span></div>
+        </div>
+      </div>
+      <div class="shell-flower" aria-hidden="true">✿</div>
+      <div class="buttons" aria-label="宠物机实体按钮">
+        <button type="button" id="prevButton" aria-label="上一个选项"><span>◀</span></button>
+        <button type="button" id="selectButton" aria-label="确认当前选项"><span>●</span></button>
+        <button type="button" id="nextButton" aria-label="下一个选项"><span>▶</span></button>
+      </div>
+      <div class="button-labels" aria-hidden="true"><span>上一个</span><span>确定</span><span>下一个</span></div>
+      <div class="shell-bottom" aria-hidden="true">✦ &nbsp; ✿ &nbsp; ✦</div>
+    </div>
+    <p class="outside-hint">点击玩具下方的三颗按钮来操作</p>
+  </main>
+  <script src="./pets.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
