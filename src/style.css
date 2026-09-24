@@ -21,6 +21,68 @@
 .scene-beach .pet-stage{bottom:10%}
 .scene-cafe .usagi-stage{left:5%}
 
+/* 宠物有自己的待机节奏；照顾和玩耍会切换成双角色动作。 */
+.usagi-stage{width:78px;height:78px;left:5%;bottom:9%;animation:none}
+.pet-stage,.pet-stage.sleeping{animation:none}
+.pet-stage[data-motion="idle"]{animation:pet-breathe 2.1s ease-in-out infinite}
+.pet-stage[data-pet-id="dou"][data-motion="idle"]{animation:pet-hoppy 2.2s ease-in-out infinite}
+.pet-stage[data-pet-id="xing"][data-motion="idle"]{animation:pet-stargaze 2.8s ease-in-out infinite}
+.pet-stage[data-motion="curious"]{animation:pet-peek 1.8s ease-in-out infinite}
+.pet-stage[data-motion="stretch"],.pet-stage[data-motion="wake"]{animation:pet-stretch 1.3s ease-in-out infinite}
+.pet-stage[data-motion="snack"]{animation:pet-nibble .48s steps(2,end) infinite}
+.pet-stage[data-motion="chase"]{animation:pet-chase .95s ease-in-out infinite}
+.pet-stage[data-motion="sing"]{animation:pet-sway .8s ease-in-out infinite alternate}
+.pet-stage[data-motion="cuddle"]{animation:pet-cuddle .95s ease-in-out infinite}
+.pet-stage[data-motion="dance"]{animation:pet-dance .62s ease-in-out infinite alternate}
+.pet-stage[data-motion="bath"]{animation:pet-bath .45s steps(2,end) infinite}
+.pet-stage[data-motion="sleep"],.pet-stage[data-motion="rest"]{animation:pet-rest 2.5s ease-in-out infinite}
+.pet-stage[data-motion="heal"]{animation:pet-celebrate .85s ease-in-out infinite}
+.pet-stage[data-motion="travel"]{animation:pet-march .65s steps(2,end) infinite}
+.pet-stage[data-motion="explore"]{animation:pet-peek 1.15s ease-in-out infinite}
+.usagi-stage[data-motion="idle"],.usagi-stage[data-motion="rest"]{animation:usagi-breathe 2s ease-in-out infinite}
+.usagi-stage[data-motion="curious"],.usagi-stage[data-motion="stretch"]{animation:usagi-wave 1.3s ease-in-out infinite}
+.usagi-stage[data-motion="snack"],.usagi-stage[data-motion="cuddle"],.usagi-stage[data-motion="heal"]{animation:usagi-visit 1.3s ease-in-out infinite}
+.usagi-stage[data-motion="chase"]{animation:usagi-toss .95s ease-in-out infinite}
+.usagi-stage[data-motion="sing"]{animation:usagi-conduct .75s ease-in-out infinite alternate}
+.usagi-stage[data-motion="dance"]{animation:usagi-dance .6s ease-in-out infinite alternate}
+.usagi-stage[data-motion="bath"]{animation:usagi-scrub .6s ease-in-out infinite}
+.usagi-stage[data-motion="sleep"]{animation:usagi-tuck 1.3s ease-in-out infinite}
+.usagi-stage[data-motion="wake"]{animation:usagi-wave .65s ease-in-out infinite}
+.usagi-stage[data-motion="travel"],.usagi-stage[data-motion="explore"]{animation:usagi-march .65s steps(2,end) infinite}
+.action-effects{position:absolute;inset:0;z-index:4;pointer-events:none}
+.action-effects span{position:absolute;left:46%;top:44%;font-size:22px;font-weight:900;color:#ffe79e;text-shadow:2px 2px #a66d9b;animation:action-spark 1.25s ease-out infinite}
+.action-effects span:nth-child(2){left:58%;top:33%;animation-delay:.28s}
+.action-effects span:nth-child(3){left:33%;top:55%;animation-delay:.56s}
+.effect-bath span{color:#c4f6fc;text-shadow:1px 2px #6da9bb}
+.effect-cuddle span,.effect-snack span{color:#f391ae;text-shadow:1px 2px #fff3dc}
+.effect-sleep span{color:#dad1fb;text-shadow:1px 2px #776d9b}
+.effect-chase span:first-child{color:#ed9bb7;animation:action-ball .95s ease-in-out infinite}
+@keyframes pet-breathe{50%{transform:translate(-50%,-5px) scale(1.03,.97)}}
+@keyframes pet-hoppy{45%{transform:translate(-50%,-10px) rotate(-4deg)}55%{transform:translate(-50%,-10px) rotate(4deg)}}
+@keyframes pet-stargaze{50%{transform:translate(-50%,-7px) rotate(6deg)}}
+@keyframes pet-peek{35%{transform:translate(-58%,-5px) rotate(-8deg)}75%{transform:translate(-43%,0) rotate(7deg)}}
+@keyframes pet-stretch{45%{transform:translate(-50%,-8px) scale(.88,1.12)}70%{transform:translate(-50%,1px) scale(1.12,.87)}}
+@keyframes pet-nibble{50%{transform:translate(-50%,2px) scale(1.07,.94)}}
+@keyframes pet-chase{30%{transform:translate(-75%,-16px) rotate(-12deg)}65%{transform:translate(-25%,-9px) rotate(11deg)}}
+@keyframes pet-sway{to{transform:translate(-50%,-5px) rotate(12deg)}}
+@keyframes pet-cuddle{45%{transform:translate(-60%,-3px) rotate(-8deg) scale(1.08)}}
+@keyframes pet-dance{to{transform:translate(-45%,-13px) rotate(14deg)}}
+@keyframes pet-bath{50%{transform:translate(-47%,-4px) rotate(6deg)}}
+@keyframes pet-rest{50%{transform:translate(-50%,2px) scale(1.04,.95)}}
+@keyframes pet-celebrate{50%{transform:translate(-50%,-18px) rotate(9deg)}}
+@keyframes pet-march{50%{transform:translate(-44%,-6px) rotate(5deg)}}
+@keyframes usagi-breathe{50%{transform:translateY(-5px) rotate(-3deg)}}
+@keyframes usagi-wave{45%{transform:translate(5px,-8px) rotate(12deg)}}
+@keyframes usagi-visit{45%{transform:translate(35px,-11px) rotate(10deg)}75%{transform:translate(40px,-4px) rotate(-8deg)}}
+@keyframes usagi-toss{35%{transform:translate(12px,-15px) rotate(-15deg)}70%{transform:translate(26px,-4px) rotate(12deg)}}
+@keyframes usagi-conduct{to{transform:translate(14px,-9px) rotate(-12deg)}}
+@keyframes usagi-dance{to{transform:translate(12px,-12px) rotate(15deg)}}
+@keyframes usagi-scrub{50%{transform:translate(30px,-5px) rotate(10deg)}}
+@keyframes usagi-tuck{55%{transform:translate(29px,1px) rotate(18deg)}}
+@keyframes usagi-march{50%{transform:translate(17px,-7px) rotate(-6deg)}}
+@keyframes action-spark{0%{opacity:0;transform:translateY(10px) scale(.5)}25%{opacity:1}100%{opacity:0;transform:translateY(-28px) scale(1.2)}}
+@keyframes action-ball{0%,100%{transform:translate(-46px,18px)}50%{transform:translate(25px,-33px)}}
+
 /* 机身高度以实际可见视口为准，包含浏览器工具栏与安全区域。 */
 @media(max-width:600px),(max-width:1000px) and (orientation:landscape){
   html,body{height:100%;overflow:hidden}
@@ -67,3 +129,6 @@
   .name-view .pixel-panel{gap:2px}.name-view p{font-size:8px;line-height:1.2}.name-view label{font-size:9px}.pixel-input{padding:3px;font-size:10px}
   .game-intro{font-size:8px}.mystery-box{font-size:22px;border-width:2px}.game-score{font-size:15px}.rhythm-track{height:24px;margin:5px 2px}
 }
+@media(max-width:600px),(max-width:1000px) and (orientation:landscape){.usagi-stage{width:67px;height:67px}}
+@media(max-width:600px) and (max-height:520px),(max-width:1000px) and (orientation:landscape) and (max-height:520px){.usagi-stage{width:52px;height:52px}}
+@media(prefers-reduced-motion:reduce){.pet-stage,.usagi-stage,.action-effects span{animation-duration:.01ms!important;animation-iteration-count:1!important}}

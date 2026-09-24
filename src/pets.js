@@ -6,10 +6,10 @@ const PETS = [
     favorite: '草莓蛋糕', accent: '#f38c9f', shadow: '#c95679',
     palette: { o: '#5b486b', b: '#fff0d8', s: '#f6b6cc', c: '#fa839c', e: '#382b4a', w: '#ffffff' },
     baby: [
-      '................','................','.....oooooo.....','...oobbbbbboo...','..obbbbbbbbbbo..','..obbbbbbbbbbo..','..obbbbbbbbbbo..','..obbsbebbssbo..','..obbsbebbssbo..','..obbbbbcbbbbo..','...obbbccbbbo...','...obbbbbbbbo....','....oobbbboo....','.....oooooo.....','................','................'
+      '................','................','.....oooooo.....','...oobbbbbboo...','..obbbbbbbbbbo..','..obbbbbbbbbbo..','..obbbbbbbbbbo..','..obbsbebbssbo..','..obbsbebbssbo..','..obbbbbcbbbbo..','...obbbccbbbo...','...obbbbbbbbo...','....oobbbboo....','.....oooooo.....','................','................'
     ],
     grown: [
-      '................','....oo....oo....','...obbo..obbo...','...obbo..obbo...','..oobbboobbbboo.','.obbbbbbbbbbbbo.','.obbbbbbbbbbbbo.','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo.','.obbbbbccbbbbo.','..obbbbbbbbbo..','...obbbbbbbbo...','....oobbbboo....','.....oooooo.....','................'
+      '................','....oo....oo....','...obbo..obbo...','...obbo..obbo...','..oobbboobbbboo.','.obbbbbbbbbbbbo.','.obbbbbbbbbbbbo.','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo..','.obbbbbccbbbbo..','..obbbbbbbbbo...','...obbbbbbbbo...','....oobbbboo....','.....oooooo.....','................'
     ]
   },
   {
@@ -20,7 +20,7 @@ const PETS = [
       '................','.......ll.......','......llll......','.....ollbo......','......obbo......','....oobbbboo....','...obbbbbbbbo...','..obbbbbbbbbbo..','..obbsbebssbbo..','..obbsbebssbbo..','..obbbbbcbbbbo..','...obbbccbbbo...','....obbbbbbo....','.....oooooo.....','................','................'
     ],
     grown: [
-      '.......ll.......','......llll......','....oolllloo....','...obbolbbboo...','....obbbbbo.....','..oobbbbbbbboo..','.obbbbbbbbbbbbo.','.obbbbbbbbbbbbo.','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo.','..obbbbccbbbbo..','...obbbbbbbbo...','....oobbbboo....','.....oooooo.....','................'
+      '.......ll.......','......llll......','....oolllloo....','...obbolbbboo...','....obbbbbo.....','..oobbbbbbbboo..','.obbbbbbbbbbbbo.','.obbbbbbbbbbbbo.','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo..','..obbbbccbbbbo..','...obbbbbbbbo...','....oobbbboo....','.....oooooo.....','................'
     ]
   },
   {
@@ -31,7 +31,7 @@ const PETS = [
       '................','.......oo.......','......obbo......','....oobbbboo....','...obbbbbbbo....','..obbbbbbbbbbo..','..obbsbebssbbo..','..obbsbebssbbo..','..obbbbbcbbbbo..','...obbbccbbbo...','....obbbbbbo....','....obbbbbbo....','...ooobbbbooo...','..oo..oooo..oo..','................','................'
     ],
     grown: [
-      '.......oo.......','......obbo......','.....obbbbo.....','..ooobbbbbooo...','..obbbbbbbbbbo..','...obbbbbbbbo...','..obbbbbbbbbbo..','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo.','..obbbbccbbbbo..','..obbbbbbbbbbo..','..oobbbbbbbboo..','..oo..oooo..oo..','................','................'
+      '.......oo.......','......obbo......','.....obbbbo.....','..ooobbbbbooo...','..obbbbbbbbbbo..','...obbbbbbbbo...','..obbbbbbbbbbo..','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo..','..obbbbccbbbbo..','..obbbbbbbbbbo..','..oobbbbbbbboo..','..oo..oooo..oo..','................','................'
     ]
   }
 ];

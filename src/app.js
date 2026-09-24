@@ -14,9 +14,10 @@ let diaryPage = 0;
 let statusPage = 0;
 let game = null;
 let rhythmTimer = null;
-let helperTimer = null;
 let toastTimer = null;
 let audioContext;
+let interaction = null;
+let lastMotion = '';
 
 function loadState() {
   try {
@@ -119,7 +120,7 @@ function drawSprite(canvas, rows, palette) {
   }));
   return ctx;
 }
-function drawPet(canvas, pet = PET_BY_ID[state?.petId] || PETS[0], preview = false) {
+function drawPet(canvas, pet = PET_BY_ID[state?.petId] || PETS[0], preview = false, pose = 'idle') {
   const stage = preview || !state ? 0 : stageIndex();
   const mutation = !preview && state?.form ? MUTATION_BY_ID[state.form] : null;
   const palette = { ...pet.palette };
@@ -136,10 +137,42 @@ function drawPet(canvas, pet = PET_BY_ID[state?.petId] || PETS[0], preview = fal
     else { ctx.fillRect(2, 2, 3, 2); ctx.fillRect(11, 2, 3, 2); }
   }
   if (stage >= 3) { ctx.fillStyle = '#fff6cd'; ctx.fillRect(1, 8, 1, 2); ctx.fillRect(14, 8, 1, 2); }
+  if (preview) return;
+  const eyes = [];
+  sprite.forEach((row, y) => [...row].forEach((pixel, x) => { if (pixel === 'e') eyes.push([x, y]); }));
+  if (['blink', 'sleep', 'happy', 'nibble', 'look'].includes(pose)) {
+    eyes.forEach(([x, y], index) => {
+      ctx.fillStyle = palette.b;
+      ctx.fillRect(x, y, 1, 1);
+      ctx.fillStyle = pose === 'sleep' || pose === 'blink' || pose === 'happy' ? palette.o : palette.e;
+      ctx.fillRect(pose === 'look' ? Math.min(14, x + 1) : x, pose === 'sleep' || pose === 'blink' || pose === 'happy' ? y + 1 : y, 1, 1);
+      if (pose === 'happy' && index === 0) { ctx.fillStyle = '#fff8e7'; ctx.fillRect(x - 1, y - 2, 1, 1); }
+    });
+  }
+  if (pose === 'nibble') {
+    ctx.fillStyle = palette.b; ctx.fillRect(7, 10, 2, 2);
+    ctx.fillStyle = palette.o; ctx.fillRect(7, 10, 1, 1); ctx.fillRect(8, 11, 1, 1);
+  } else if (pose === 'surprise') {
+    ctx.fillStyle = palette.o; ctx.fillRect(7, 10, 2, 2);
+    ctx.fillStyle = '#fff8e7'; ctx.fillRect(6, 7, 1, 1); ctx.fillRect(10, 7, 1, 1);
+  }
+}
+function drawUsagi(canvas, pose = 'idle') {
+  const rows = ['cheer', 'wave', 'dance'].includes(pose) ? USAGI.cheer : USAGI.idle;
+  const ctx = drawSprite(canvas, rows, USAGI.palette);
+  if (!ctx) return;
+  if (pose === 'sleep' || pose === 'wink' || pose === 'sing') {
+    ctx.fillStyle = USAGI.palette.y;
+    ctx.fillRect(5, 7, 1, 1); ctx.fillRect(10, 7, 1, 1);
+    ctx.fillStyle = USAGI.palette.o;
+    if (pose === 'sleep') { ctx.fillRect(5, 8, 1, 1); ctx.fillRect(10, 8, 1, 1); }
+    else if (pose === 'wink') ctx.fillRect(5, 8, 1, 1);
+    else { ctx.fillRect(7, 10, 2, 2); }
+  }
 }
 function drawCanvases() {
   document.querySelectorAll('canvas[data-pet]').forEach(canvas => drawPet(canvas, PET_BY_ID[canvas.dataset.pet], canvas.dataset.preview === 'true'));
-  document.querySelectorAll('canvas[data-usagi]').forEach(canvas => drawSprite(canvas, USAGI.idle, USAGI.palette));
+  document.querySelectorAll('canvas[data-usagi]').forEach(canvas => drawUsagi(canvas));
 }
 function beep() {
   if (!state?.sound) return;
@@ -159,25 +192,79 @@ function toast(message) {
   viewElement.append(box);
   clearTimeout(toastTimer); toastTimer = setTimeout(() => box.remove(), 2200);
 }
-function helperAnimation(icon) {
-  clearTimeout(helperTimer);
-  const helper = $('.usagi-stage');
-  if (!helper) return;
-  helper.classList.remove('helping'); void helper.offsetWidth; helper.classList.add('helping');
-  const effect = document.createElement('span'); effect.className = 'care-effect'; effect.textContent = icon;
-  $('.pixel-scene')?.append(effect);
-  drawSprite(helper.querySelector('canvas'), USAGI.cheer, USAGI.palette);
-  helperTimer = setTimeout(() => {
-    helper.classList.remove('helping'); effect.remove();
-    drawSprite(helper.querySelector('canvas'), USAGI.idle, USAGI.palette);
-  }, 1500);
+const ACTION_EFFECTS = {
+  snack: ['✦', '♥', '✦'], chase: ['●', '✦', '●'], sing: ['♪', '♫', '♪'],
+  cuddle: ['♥', '♥', '✿'], dance: ['✦', '✧', '✦'], bath: ['○', '◌', '○'],
+  sleep: ['z', 'Z', 'z'], wake: ['☀', '✦', '☀'], heal: ['✚', '♥', '✚'],
+  travel: ['✦', '✧', '✦'], explore: ['✿', '✦', '✿']
+};
+function startInteraction(kind = 'cuddle') {
+  interaction = { kind, started: performance.now(), duration: kind === 'sleep' ? 2200 : 2600 };
+  lastMotion = '';
+  const scene = $('.pixel-scene');
+  if (!scene) return;
+  scene.querySelector('.action-effects')?.remove();
+  const effects = document.createElement('div');
+  effects.className = `action-effects effect-${kind}`;
+  effects.setAttribute('aria-hidden', 'true');
+  (ACTION_EFFECTS[kind] || ACTION_EFFECTS.cuddle).forEach(symbol => {
+    const spark = document.createElement('span'); spark.textContent = symbol; effects.append(spark);
+  });
+  scene.append(effects);
+  animateHome();
 }
-function finishAction(message, icon, xp, trait, traitGain = 0) {
+function animateHome() {
+  if (view !== 'home' || document.hidden || !state) return;
+  const petStage = $('.pet-stage');
+  const usagiStage = $('.usagi-stage');
+  if (!petStage || !usagiStage) return;
+  const now = performance.now();
+  if (interaction && now - interaction.started >= interaction.duration) {
+    interaction = null;
+    $('.action-effects')?.remove();
+    lastMotion = '';
+  }
+  const step = Math.floor(now / 180);
+  let motion, petPose, usagiPose;
+  if (interaction) {
+    motion = interaction.kind;
+    const sequence = {
+      snack: ['look', 'surprise', 'nibble', 'nibble', 'happy'],
+      chase: ['surprise', 'look', 'happy', 'look', 'happy'],
+      sing: ['look', 'happy', 'blink', 'happy'],
+      cuddle: ['surprise', 'happy', 'blink', 'happy'],
+      dance: ['happy', 'look', 'happy', 'blink'],
+      bath: ['surprise', 'blink', 'happy', 'blink'],
+      sleep: ['blink', 'sleep', 'sleep', 'sleep'],
+      wake: ['sleep', 'blink', 'surprise', 'happy'],
+      heal: ['blink', 'happy', 'surprise', 'happy'],
+      travel: ['look', 'surprise', 'happy', 'look'],
+      explore: ['look', 'surprise', 'look', 'happy']
+    }[motion] || ['happy'];
+    petPose = sequence[Math.floor((now - interaction.started) / 380) % sequence.length];
+    usagiPose = ({ snack: 'wave', chase: 'cheer', sing: 'sing', cuddle: 'wink', dance: 'dance', bath: 'wave', sleep: 'sleep', wake: 'cheer', heal: 'wave', travel: 'cheer', explore: 'wink' })[motion] || 'cheer';
+  } else if (state.sleeping) {
+    motion = 'rest'; petPose = 'sleep'; usagiPose = step % 28 < 2 ? 'sleep' : 'idle';
+  } else {
+    const idleCycle = Math.floor(now / 4600) % 4;
+    motion = ['idle', 'curious', 'idle', 'stretch'][idleCycle];
+    petPose = step % 25 === 0 ? 'blink' : motion === 'curious' ? 'look' : motion === 'stretch' ? 'happy' : 'idle';
+    usagiPose = step % 31 === 0 ? 'wink' : motion === 'curious' ? 'wave' : 'idle';
+  }
+  if (motion !== lastMotion || petStage.dataset.motion !== motion) {
+    petStage.dataset.motion = motion;
+    usagiStage.dataset.motion = motion;
+    lastMotion = motion;
+  }
+  drawPet(petStage.querySelector('canvas'), PET_BY_ID[state.petId], false, petPose);
+  drawUsagi(usagiStage.querySelector('canvas'), usagiPose);
+}
+function finishAction(message, icon, xp, trait, traitGain = 0, motion = 'cuddle') {
   state.careCount++;
   gain(xp, trait, traitGain);
   log(message, icon);
   state.lastUpdated = Date.now();
-  saveState(); open('home'); helperAnimation(icon); toast(message); beep();
+  saveState(); open('home'); startInteraction(motion); toast(message); beep();
 }
 function canAct(energy = 0) {
   if (state.sleeping) { toast('先叫醒小伙伴吧'); return false; }
@@ -194,7 +281,7 @@ function feed(food) {
   state.stats.happy = clamp(state.stats.happy + (food.happy || 0) + (PET_BY_ID[state.petId].favorite === food.name ? 5 : 0));
   state.stats.energy = clamp(state.stats.energy + (food.energy || 0));
   state.stats.clean = clamp(state.stats.clean - 3);
-  finishAction(`乌沙奇喂${state.name}吃了${food.name}！`, food.icon, 5, food.trait, food.traitGain);
+  finishAction(`乌沙奇喂${state.name}吃了${food.name}！`, food.icon, 5, food.trait, food.traitGain, 'snack');
 }
 function play(kind) {
   updateTime(); if (!canAct(kind === 'pat' ? 0 : 10)) return;
@@ -208,7 +295,7 @@ function play(kind) {
   state.stats.energy = clamp(state.stats.energy + actions.energy);
   state.stats.hunger = clamp(state.stats.hunger + actions.hunger);
   state.stats.clean = clamp(state.stats.clean - 4);
-  finishAction(actions.message, actions.icon, actions.xp, actions.trait, actions.gain);
+  finishAction(actions.message, actions.icon, actions.xp, actions.trait, actions.gain, { ball: 'chase', song: 'sing', pat: 'cuddle', dance: 'dance' }[kind]);
 }
 function care(kind) {
   updateTime();
@@ -217,16 +304,16 @@ function care(kind) {
     if (state.stats.clean >= 96) return toast('已经干干净净啦');
     state.stats.clean = clamp(state.stats.clean + 44);
     state.stats.happy = clamp(state.stats.happy + 4);
-    finishAction(`乌沙奇给${state.name}洗了香香澡！`, '✿', 5, 'ocean', 2);
+    finishAction(`乌沙奇给${state.name}洗了香香澡！`, '✿', 5, 'ocean', 2, 'bath');
   } else if (kind === 'sleep') {
     state.sleeping = !state.sleeping;
     state.sleepSince = state.sleeping ? Date.now() : null;
     if (!state.sleeping) state.stats.energy = clamp(state.stats.energy + 6);
-    finishAction(state.sleeping ? `乌沙奇哄${state.name}睡觉了。` : `${state.name}醒来了！`, '☾', 3, 'cozy', 2);
+    finishAction(state.sleeping ? `乌沙奇哄${state.name}睡觉了。` : `${state.name}醒来了！`, '☾', 3, 'cozy', 2, state.sleeping ? 'sleep' : 'wake');
   } else if (kind === 'heal') {
     if (state.stats.health >= 96) return toast('小伙伴现在很健康');
     state.stats.health = clamp(state.stats.health + 32);
-    finishAction(`乌沙奇照顾了${state.name}。`, '✚', 5, 'cozy', 2);
+    finishAction(`乌沙奇照顾了${state.name}。`, '✚', 5, 'cozy', 2, 'heal');
   }
 }
 function travel(place) {
@@ -235,7 +322,7 @@ function travel(place) {
   state.place = place.id;
   state.stats.energy = clamp(state.stats.energy - 6);
   state.stats.happy = clamp(state.stats.happy + 6);
-  finishAction(`乌沙奇带${state.name}到了${place.name}。`, place.icon, 4, place.trait, 1);
+  finishAction(`乌沙奇带${state.name}到了${place.name}。`, place.icon, 4, place.trait, 1, 'travel');
 }
 function placeActivity() {
   updateTime(); if (!canAct(12)) return;
@@ -245,7 +332,7 @@ function placeActivity() {
   state.stats.energy = clamp(state.stats.energy - 12);
   state.stats.hunger = clamp(state.stats.hunger - 6);
   state.stats.happy = clamp(state.stats.happy + 13);
-  finishAction(`${place.activity}，找到 ${found} 枚星币！`, place.icon, 7, place.trait, 3);
+  finishAction(`${place.activity}，找到 ${found} 枚星币！`, place.icon, 7, place.trait, 3, 'explore');
 }
 function menuOptions() {
   switch (view) {
@@ -284,6 +371,7 @@ function menuOptions() {
 }
 function open(next) {
   stopRhythm();
+  if (next !== 'home') { interaction = null; lastMotion = ''; }
   view = next; selection = 0;
   if (next === 'status') statusPage = 0;
   render();
@@ -311,7 +399,7 @@ function sceneArt(placeId) {
 function homeMarkup() {
   const place = PLACE_BY_ID[state.place];
   const options = menuOptions();
-  return `<div class="home-view"><div class="pixel-scene scene-${esc(place.id)}">${sceneArt(place.id)}<div class="scene-sign">${esc(place.name)}</div><div class="usagi-stage"><canvas data-usagi width="16" height="16" aria-label="乌沙奇"></canvas></div><div class="pet-stage ${state.sleeping ? 'sleeping' : ''}"><canvas data-pet="${esc(state.petId)}" width="16" height="16" aria-label="${esc(state.name)}"></canvas></div><div class="scene-message">${esc(moodText())}</div></div><div class="home-toolbar">${options.map((option, i) => `<div class="home-tile ${selection === i ? 'selected' : ''}" data-choice="${i}"><span class="tile-icon">${esc(option[1])}</span>${esc(option[0])}</div>`).join('')}</div></div>`;
+  return `<div class="home-view"><div class="pixel-scene scene-${esc(place.id)}">${sceneArt(place.id)}<div class="scene-sign">${esc(place.name)}</div><div class="usagi-stage"><canvas data-usagi width="16" height="16" aria-label="乌沙奇"></canvas></div><div class="pet-stage" data-pet-id="${esc(state.petId)}"><canvas data-pet="${esc(state.petId)}" width="16" height="16" aria-label="${esc(state.name)}"></canvas></div><div class="scene-message">${esc(moodText())}</div></div><div class="home-toolbar">${options.map((option, i) => `<div class="home-tile ${selection === i ? 'selected' : ''}" data-choice="${i}"><span class="tile-icon">${esc(option[1])}</span>${esc(option[0])}</div>`).join('')}</div></div>`;
 }
 function statusMarkup() {
   const pet = PET_BY_ID[state.petId];
@@ -362,6 +450,7 @@ function render() {
   else markup = menuMarkup({ care: '乌沙奇来照顾', food: '今天吃什么？', play: '一起玩什么？', places: '想去哪里？', games: '挑个小游戏', settings: '小小设置', reset: '真的要重新领养吗？' }[view] || '菜单');
   $('#screenView').innerHTML = markup;
   drawCanvases();
+  if (view === 'home') animateHome();
   $('#screenView').querySelectorAll('[data-choice]').forEach(tile => tile.addEventListener('click', () => { selection = Number(tile.dataset.choice); render(); }));
   $('#nameInput')?.addEventListener('keydown', event => { if (event.key === 'Enter') confirmChoice(); });
   if (view === 'rhythm') updateRhythmNeedle();
@@ -449,5 +538,6 @@ document.addEventListener('keydown', event => {
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && state) { updateTime(); render(); } });
 setInterval(() => { if (state) { updateTime(); if (view === 'home' || view === 'status') render(); } }, 60000);
+setInterval(animateHome, 160);
 if (state) { updateTime(); saveState(); }
 render();
