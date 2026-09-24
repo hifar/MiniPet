@@ -1,5 +1,6 @@
 // 可替换的宠物配置：新增物种时，复制一个对象并修改 id、文案、配色与像素图。
 // 像素图每行 16 格；. 为透明，其他字符在 palette 中对应颜色。
+const sprite = art => art.trim().split('\n').map(row => row.trim().padEnd(16, '.').slice(0, 16));
 const PETS = [
   {
     id: 'mimi', name: '米米', title: '云朵团子', nature: '贪吃又爱撒娇',
@@ -33,19 +34,261 @@ const PETS = [
     grown: [
       '.......oo.......','......obbo......','.....obbbbo.....','..ooobbbbbooo...','..obbbbbbbbbbo..','...obbbbbbbbo...','..obbbbbbbbbbo..','.obssbebebssbbo.','.obssbebebssbbo.','.obbbbbcbbbbbo..','..obbbbccbbbbo..','..obbbbbbbbbbo..','..oobbbbbbbboo..','..oo..oooo..oo..','................','................'
     ]
+  },
+  {
+    id: 'diandian', name: '点点', title: '斑点团子', nature: '爱收集亮晶晶的小东西',
+    favorite: '苹果片', accent: '#efaa78', shadow: '#ae7069',
+    palette: { o: '#76596d', b: '#ffe8bb', s: '#ffc9a9', c: '#e98b9b', e: '#40354d', d: '#ce916f', w: '#fff' },
+    baby: sprite(`
+................
+................
+.....oooooo.....
+...oobbbbbboo...
+..obbbdbdbbbbo..
+..obbbbbbbbbbo...
+..obdbbbbbdbbo...
+..obbebbbebbbo...
+..obbsbbbssbbo...
+..obbbbbcbbbbo...
+...obbbccbbbo....
+....obbbbbbo.....
+.....oooooo......
+................
+................
+................`),
+    grown: sprite(`
+................
+....ooo..ooo....
+...obbo..obbo...
+..obbbbbbbbbbo...
+.obdbbbdbbbdbbo..
+.obbbbbbbbbbbbo..
+.obbbbbbbbbbbbo..
+.obbebbbbbebbo...
+.obbsbbbbbsbbo...
+.obbbbbcbbbbbo...
+..obbbbccbbbbo...
+..obdbbbbbdbbo...
+...obbbbbbbbo....
+....oobbbboo.....
+.....oooooo......
+................`)
+  },
+  {
+    id: 'xiaoxiao', name: '小小', title: '口袋飞鼠', nature: '个子小，胆子却很大',
+    favorite: '星星饼干', accent: '#9eb9e5', shadow: '#677eaf',
+    palette: { o: '#59617d', b: '#dce9ff', s: '#b6c8ee', c: '#e99caf', e: '#303a5d', d: '#8fa9d9', w: '#fff' },
+    baby: sprite(`
+................
+..oo........oo..
+..obbo......obbo
+...obbo....obbo.
+....obbbbbbo....
+...obbbbbbbbo...
+..obbbbbbbbbbo..
+.oobbbebebbbboo.
+.obbsbbbbbsbbbo.
+..obbbbcbbbbo...
+...obbbccbbbo...
+....obbbbbbo....
+.....oooooo.....
+................
+................
+................`),
+    grown: sprite(`
+.oo..........oo.
+.obbo......obbo.
+..obbo....obbo..
+...obbbbbbbbo...
+..obbbbbbbbbbo..
+.obbbbbbbbbbbbo.
+oobbbbbbbbbbbboo
+obbbbsbebsbbbbo
+obbbbbbbbbbbbbbo
+oobbbbbcbbbbboo
+..obbbbccbbbbo..
+...obbbbbbbbo...
+....obbbbbbo....
+...ooobbbbooo...
+..oo..oooo..oo..
+................`)
+  },
+  {
+    id: 'maomao', name: '毛毛', title: '蓬蓬绒球', nature: '高兴时全身毛会炸开',
+    favorite: '草莓蛋糕', accent: '#e7a9c2', shadow: '#b46f95',
+    palette: { o: '#795a77', b: '#f6d8ef', s: '#edb8d9', c: '#f48ca9', e: '#4d385c', d: '#dba9cf', w: '#fff' },
+    baby: sprite(`
+................
+.....oo..oo.....
+...oobboobboo...
+..obbbbbbbbbbo..
+.obbbbbbbbbbbbo.
+..obbbbbbbbbbo..
+.obbbbbbbbbbbbo.
+..obbebbbebbbo..
+.obbsbbbbbsbbbo.
+..obbbbcbbbbo...
+...obbbccbbbo...
+..obbbbbbbbbbo..
+...oobbbbbboo...
+.....oooooo.....
+................
+................`),
+    grown: sprite(`
+..oo..oo..oo....
+.obboobboobbbo..
+obbbbbbbbbbbbbo.
+.obbbbbbbbbbbbbo
+obbbbbbbbbbbbbo.
+.obbbbbbbbbbbbbo
+obbbbbbbbbbbbbo.
+.obbebbbbbebbo..
+obbsbbbbbbssbbo.
+.obbbbbcbbbbbo..
+obbbbbbccbbbbbo.
+.obbbbbbbbbbbbo..
+..obbbbbbbbbbo...
+...oobbbbbboo....
+.....oooooo.....
+................`)
+  },
+  {
+    id: 'rongrong', name: '茸茸', title: '垂耳棉花糖', nature: '喜欢把朋友抱得暖暖的',
+    favorite: '月光牛奶', accent: '#c8b3e9', shadow: '#9278b7',
+    palette: { o: '#71627f', b: '#eae1fb', s: '#d3c4ef', c: '#ee9da8', e: '#413c5c', d: '#bba7e3', w: '#fff' },
+    baby: sprite(`
+................
+..ooo......ooo..
+.obbo......obbo.
+.obbooooooobbo.
+..obbbbbbbbbbo..
+..obbbbbbbbbbo..
+..obbbbbbbbbbo..
+..obbebbbebbbo..
+..obbsbbbssbbo..
+...obbbcbbbbo...
+...obbbccbbbo...
+....obbbbbbo....
+.....oooooo.....
+................
+................
+................`),
+    grown: sprite(`
+oo............oo
+obbo........obbo
+obbo........obbo
+obboooooooooobbo
+.obbbbbbbbbbbbo.
+.obbbbbbbbbbbbo.
+.obbbbbbbbbbbbo.
+.obbebbbbbebbo..
+.obbsbbbbbsbbo..
+.obbbbbcbbbbbo..
+..obbbbccbbbbo..
+...obbbbbbbbo...
+....obbbbbbo....
+...ooobbbbooo...
+..oo..oooo..oo..
+................`)
+  },
+  {
+    id: 'mimi_cat', name: '咪咪', title: '奶油小猫', nature: '好奇心旺盛，爱晒太阳',
+    favorite: '海苔饭团', accent: '#f3b88a', shadow: '#bf846e',
+    palette: { o: '#755b64', b: '#ffe4c8', s: '#f7bda6', c: '#e88d94', e: '#493a50', d: '#d69777', w: '#fff' },
+    baby: sprite(`
+................
+..oo........oo..
+..obbo......obbo
+...obbbo..obbbo.
+....obbbbbbo....
+...obbbbbbbbo...
+..obbbbbbbbbbo..
+..obbebbbebbbo..
+..obbsbbbssbbo..
+..obbbbcbbbbo...
+...obbbccbbbo...
+....obbbbbbo....
+.....oooooo.....
+..........oo....
+...........oo...
+................`),
+    grown: sprite(`
+.oo..........oo.
+.obbo......obbo.
+..obbbo....obbbo
+...obbbbbbbbo...
+..obbbbbbbbbbo..
+.obbbbbbbbbbbbo.
+.obbbbbbbbbbbbo.
+.obbebbbbbebbo..
+.obbsbbbbbsbbo..
+.obbbbbcbbbbbo..
+..obbbbccbbbbo..
+...obbbbbbbbo...
+....obbbbbbo....
+.....oooooo..oo.
+.............oo.
+................`)
   }
 ];
 
 const PET_BY_ID = Object.fromEntries(PETS.map(pet => [pet.id, pet]));
 
-// 食物和场地会积累不同倾向；成长达到少年期后，最高倾向会决定变异形态。
-const MUTATIONS = [
-  { id: 'sweet', name: '蜜桃绒', icon: '♥', body: '#ffd0d9', cheek: '#f28da6', line: '#965f82' },
-  { id: 'nature', name: '森之芽', icon: '✿', body: '#b9e9a3', cheek: '#75c498', line: '#507a67' },
-  { id: 'ocean', name: '海泡泡', icon: '≈', body: '#aee9e9', cheek: '#79b9d8', line: '#557e9c' },
-  { id: 'star', name: '星光闪', icon: '✦', body: '#ffe69e', cheek: '#eca3c1', line: '#7d6a9b' },
-  { id: 'cozy', name: '月绒绒', icon: '☾', body: '#d9cff5', cheek: '#b7a6db', line: '#776a9b' }
+// 五种倾向各有十种可收藏形态；weight 是同倾向抽取时的相对权重。
+const TRAITS = [
+  { id: 'sweet', name: '甜蜜', icon: '♥', color: '#f28da6', hue: 340 },
+  { id: 'nature', name: '自然', icon: '✿', color: '#75c498', hue: 125 },
+  { id: 'ocean', name: '海洋', icon: '≈', color: '#79b9d8', hue: 190 },
+  { id: 'star', name: '星光', icon: '✦', color: '#e8bb77', hue: 44 },
+  { id: 'cozy', name: '安睡', icon: '☾', color: '#b7a6db', hue: 263 }
 ];
+const TRAIT_BY_ID = Object.fromEntries(TRAITS.map(item => [item.id, item]));
+const MUTATION_SETS = {
+  sweet: [
+    ['sweet', '蜜桃绒', 'bow'], ['berry_puff', '草莓泡芙', 'berry'], ['caramel', '焦糖布丁', 'crown'],
+    ['sakura', '樱花糖', 'flower'], ['honeybee', '蜜糖蜂', 'antenna'], ['rose_cloud', '玫瑰云', 'wings'],
+    ['cotton_candy', '棉花糖', 'halo'], ['raspberry', '覆盆莓', 'dots'], ['heart_wish', '心愿糖', 'heart'],
+    ['rainbow_dream', '虹彩甜梦', 'rainbow']
+  ],
+  nature: [
+    ['nature', '森之芽', 'sprout'], ['clover', '四叶苗', 'flower'], ['moss_deer', '青苔鹿', 'antlers'],
+    ['pinecone', '松果球', 'crown'], ['mushroom', '蘑菇伞', 'cap'], ['bamboo', '竹叶团', 'leaf'],
+    ['flower_crown', '花冠灵', 'halo'], ['fern', '雨露蕨', 'wings'], ['golden_ear', '金穗兔', 'antenna'],
+    ['ancient_tree', '秘境古树', 'branch']
+  ],
+  ocean: [
+    ['ocean', '海泡泡', 'bubbles'], ['coral', '珊瑚芽', 'branch'], ['sea_spray', '浪花团', 'wave'],
+    ['pearl_shell', '珍珠贝', 'crown'], ['sea_salt', '海盐晶', 'crystal'], ['whale_dream', '蓝鲸梦', 'fins'],
+    ['jelly_lamp', '水母灯', 'antenna'], ['tide_fin', '潮汐鳍', 'wings'], ['deep_vortex', '深蓝涡', 'spiral'],
+    ['aurora_sea', '极光海灵', 'halo']
+  ],
+  star: [
+    ['star', '星光闪', 'star'], ['comet_tail', '彗星尾', 'trail'], ['galaxy_sugar', '银河糖', 'dots'],
+    ['meteor', '月陨石', 'crystal'], ['neon_wing', '霓虹翼', 'wings'], ['orbit', '星轨环', 'halo'],
+    ['sun_crown', '日曜冠', 'crown'], ['shooting_feather', '流星羽', 'leaf'], ['sky_crystal', '天穹晶', 'antlers'],
+    ['supernova', '超新星', 'burst']
+  ],
+  cozy: [
+    ['cozy', '月绒绒', 'moon'], ['cloud_pillow', '云朵枕', 'cap'], ['night_dew', '夜露眠', 'dots'],
+    ['fleece_dream', '绒球梦', 'bow'], ['hearth', '暖炉心', 'heart'], ['snow_cap', '雪绒帽', 'crown'],
+    ['lavender', '薰衣草', 'flower'], ['night_light', '小夜灯', 'antenna'], ['frost_fox', '霜月狐', 'wings'],
+    ['eternal_night', '永夜王', 'halo']
+  ]
+};
+const RARITY_WEIGHTS = [28, 21, 16, 11, 7, 5, 3, 1.8, .8, .2];
+const MUTATIONS = TRAITS.flatMap((trait, group) => MUTATION_SETS[trait.id].map(([id, name, motif], index) => {
+  const hue = (trait.hue + index * 9 - 12 + 360) % 360;
+  return {
+    id, name, motif, trait: trait.id, icon: trait.icon,
+    rarity: index < 3 ? '常见' : index < 6 ? '少见' : index < 8 ? '稀有' : index < 9 ? '珍奇' : '传说',
+    weight: RARITY_WEIGHTS[index] * (1 + group * .08 + index * .007),
+    wild: index === 9,
+    body: `hsl(${hue}, 78%, ${83 - index * 1.6}%)`,
+    cheek: `hsl(${(hue + 27) % 360}, 73%, 67%)`,
+    line: `hsl(${(hue + 18) % 360}, 30%, 41%)`,
+    accent: `hsl(${(hue + 48) % 360}, 85%, 71%)`
+  };
+}));
 const MUTATION_BY_ID = Object.fromEntries(MUTATIONS.map(item => [item.id, item]));
 const STAGES = [
   { name: '幼崽', xp: 0 }, { name: '童年', xp: 20 },

@@ -6,12 +6,13 @@ const $ = selector => document.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const clamp = value => Math.max(0, Math.min(100, value));
 const safeName = (value, fallback) => String(value || '').trim().slice(0, 12) || fallback;
-const newTraits = () => Object.fromEntries(MUTATIONS.map(item => [item.id, 0]));
+const newTraits = () => Object.fromEntries(TRAITS.map(item => [item.id, 0]));
 let state = loadState();
 let view = state ? 'home' : 'adopt';
 let selection = 0;
 let diaryPage = 0;
 let statusPage = 0;
+let catalogPage = 0;
 let game = null;
 let rhythmTimer = null;
 let toastTimer = null;
@@ -29,8 +30,10 @@ function loadState() {
       lastUpdated: Number.isFinite(raw.lastUpdated) ? raw.lastUpdated : Date.now(),
       stats: Object.fromEntries(Object.keys(STAT_NAMES).map(key => [key, clamp(Number(raw.stats[key]) || 0)])),
       xp: Number.isFinite(raw.xp) ? raw.xp : Math.min(30, (raw.careCount || 0) * 2),
-      traits: Object.fromEntries(MUTATIONS.map(item => [item.id, Math.max(0, Number(raw.traits?.[item.id]) || 0)])),
+      traits: Object.fromEntries(TRAITS.map(item => [item.id, Math.max(0, Number(raw.traits?.[item.id]) || 0)])),
       form: raw.form && MUTATION_BY_ID[raw.form] ? raw.form : null,
+      discovered: [...new Set([...(Array.isArray(raw.discovered) ? raw.discovered : []), raw.form].filter(id => MUTATION_BY_ID[id]))],
+      lastMutationCare: Number.isFinite(raw.lastMutationCare) ? raw.lastMutationCare : (raw.careCount || 0),
       coins: Number.isFinite(raw.coins) ? Math.max(0, raw.coins) : 30,
       place: PLACE_BY_ID[raw.place] ? raw.place : 'home',
       sleeping: !!raw.sleeping, sleepSince: Number.isFinite(raw.sleepSince) ? raw.sleepSince : raw.lastUpdated,
@@ -60,21 +63,32 @@ function stageIndex() {
   STAGES.forEach((stage, i) => { if (state.xp >= stage.xp) index = i; });
   return index;
 }
-function evolve() {
-  const previous = state.form;
-  const best = MUTATIONS.reduce((winner, item) => state.traits[item.id] > state.traits[winner.id] ? item : winner);
-  const next = stageIndex() >= 2 && state.traits[best.id] >= 12 ? best.id : null;
-  if (next !== previous) {
-    state.form = next;
-    if (next) log(`${state.name}变成了「${MUTATION_BY_ID[next].name}」！`, '✦');
-  }
+function pickWeighted(items, random = Math.random) {
+  const total = items.reduce((sum, item) => sum + item.weight, 0);
+  let roll = random() * total;
+  for (const item of items) { roll -= item.weight; if (roll < 0) return item.form; }
+  return items.at(-1)?.form;
+}
+function evolve(allowRoll = false) {
+  if (!allowRoll || stageIndex() < 2) return;
+  const dominant = TRAITS.reduce((winner, item) => state.traits[item.id] > state.traits[winner.id] ? item : winner);
+  if (state.traits[dominant.id] < 12) return;
+  if (state.form && state.careCount - state.lastMutationCare < 8) return;
+  const candidates = MUTATIONS.filter(form => form.id !== state.form && (form.trait === dominant.id || form.wild))
+    .map(form => ({ form, weight: form.weight * (form.trait === dominant.id ? 1 : .15) }));
+  const next = pickWeighted(candidates);
+  if (!next) return;
+  state.form = next.id;
+  state.lastMutationCare = state.careCount;
+  if (!state.discovered.includes(next.id)) state.discovered.push(next.id);
+  log(`${state.name}变成了「${next.name}」！${next.rarity === '传说' ? '传说形态出现了！' : ''}`, next.icon);
 }
 function gain(xp, trait, amount = 0) {
   const before = stageIndex();
   state.xp += xp;
   if (trait && Object.hasOwn(state.traits, trait)) state.traits[trait] += amount;
   if (stageIndex() !== before) log(`${state.name}长大了，进入${STAGES[stageIndex()].name}期！`, '★');
-  evolve();
+  evolve(true);
 }
 function updateTime() {
   if (!state) return;
@@ -120,6 +134,40 @@ function drawSprite(canvas, rows, palette) {
   }));
   return ctx;
 }
+// 头饰像素按形态配置组合；身体配色、头饰和轮廓共同区分 50 种形态。
+const MOTIF_PIXELS = {
+  bow: '4,2 5,1 6,2 7,2 8,2 9,1 10,2',
+  berry: '6,1 7,0 8,0 9,1 7,2 8,2',
+  crown: '4,2 4,0 6,1 7,0 8,0 9,1 11,0 11,2 5,2 6,2 7,2 8,2 9,2 10,2',
+  flower: '7,0 6,1 8,1 7,2 5,2 9,2',
+  antenna: '4,0 4,1 5,2 11,0 11,1 10,2',
+  wings: '0,5 1,4 1,6 2,7 14,7 15,6 15,4 14,5',
+  halo: '5,0 6,0 7,0 8,0 9,0 10,0 4,1 11,1',
+  dots: '3,3 12,3 2,6 13,6 4,10 11,10',
+  heart: '6,0 9,0 5,1 7,1 8,1 10,1 6,2 9,2 7,3 8,3',
+  rainbow: '3,2 4,1 5,0 6,0 7,0 8,0 9,0 10,0 11,1 12,2 4,3 11,3',
+  sprout: '7,0 8,0 7,1 8,1 6,2 9,2',
+  antlers: '3,0 3,1 4,2 5,2 10,2 11,2 12,1 12,0 2,1 13,1',
+  cap: '4,1 5,0 6,0 7,0 8,0 9,0 10,0 11,1 3,2 12,2',
+  leaf: '5,1 6,0 7,0 8,1 7,2 6,2 9,2',
+  branch: '3,0 4,1 5,2 12,0 11,1 10,2 2,1 13,1',
+  bubbles: '2,2 3,1 4,2 12,1 13,2 12,3 1,5',
+  wave: '2,2 3,1 4,2 5,1 6,2 9,2 10,1 11,2 12,1 13,2',
+  crystal: '7,0 8,0 6,1 9,1 5,2 10,2 7,3 8,3',
+  fins: '1,5 2,4 3,3 3,5 12,5 12,3 13,4 14,5',
+  spiral: '6,0 7,0 8,0 9,1 9,2 8,3 7,3 7,2',
+  star: '7,0 8,0 7,1 8,1 5,2 6,2 9,2 10,2 7,3 8,3',
+  trail: '3,0 5,1 7,0 9,1 11,0 12,2 13,3',
+  burst: '2,1 4,0 6,1 7,0 8,0 9,1 11,0 13,1 7,3 8,3',
+  moon: '6,0 7,0 5,1 5,2 6,3 7,3 8,2'
+};
+function drawMutationMotif(ctx, mutation) {
+  const pixels = MOTIF_PIXELS[mutation.motif] || MOTIF_PIXELS.star;
+  ctx.fillStyle = mutation.accent;
+  pixels.split(' ').forEach(point => { const [x, y] = point.split(',').map(Number); ctx.fillRect(x, y, 1, 1); });
+  ctx.fillStyle = mutation.cheek;
+  ctx.fillRect(3, 8, 1, 1); ctx.fillRect(12, 8, 1, 1);
+}
 function drawPet(canvas, pet = PET_BY_ID[state?.petId] || PETS[0], preview = false, pose = 'idle') {
   const stage = preview || !state ? 0 : stageIndex();
   const mutation = !preview && state?.form ? MUTATION_BY_ID[state.form] : null;
@@ -128,14 +176,7 @@ function drawPet(canvas, pet = PET_BY_ID[state?.petId] || PETS[0], preview = fal
   const sprite = stage === 0 ? pet.baby : (stage >= 3 && pet.adult) ? pet.adult : (stage >= 2 && pet.teen) ? pet.teen : pet.grown;
   const ctx = drawSprite(canvas, sprite, palette);
   if (!ctx) return;
-  if (stage >= 2) {
-    ctx.fillStyle = mutation?.cheek || '#ffe79d';
-    if (state.form === 'nature') { ctx.fillRect(3, 1, 3, 2); ctx.fillRect(5, 0, 2, 2); }
-    else if (state.form === 'ocean') { ctx.fillRect(1, 1, 2, 2); ctx.fillRect(13, 2, 2, 2); }
-    else if (state.form === 'star') { ctx.fillRect(6, 0, 3, 1); ctx.fillRect(7, 0, 1, 3); }
-    else if (state.form === 'cozy') { ctx.fillRect(2, 1, 3, 1); ctx.fillRect(2, 2, 1, 2); }
-    else { ctx.fillRect(2, 2, 3, 2); ctx.fillRect(11, 2, 3, 2); }
-  }
+  if (stage >= 2 && mutation) drawMutationMotif(ctx, mutation);
   if (stage >= 3) { ctx.fillStyle = '#fff6cd'; ctx.fillRect(1, 8, 1, 2); ctx.fillRect(14, 8, 1, 2); }
   if (preview) return;
   const eyes = [];
@@ -347,7 +388,7 @@ function menuOptions() {
       ['看护', '✚', '健康 +32', () => care('heal')], ['场地活动', '♣', PLACE_BY_ID[state.place].activity, placeActivity],
       ['返回', '↶', '回到小屋', () => open('home')]
     ];
-    case 'food': return [...FOODS.map(food => [food.name, food.icon, `${food.cost} 星币 · ${MUTATION_BY_ID[food.trait].name}`, () => feed(food)]), ['返回', '↶', '照顾菜单', () => open('care')]];
+    case 'food': return [...FOODS.map(food => [food.name, food.icon, `${food.cost} 星币 · ${TRAIT_BY_ID[food.trait].name}倾向`, () => feed(food)]), ['返回', '↶', '照顾菜单', () => open('care')]];
     case 'play': return [
       ['彩球', '●', '活泼与自然', () => play('ball')], ['唱歌', '♫', '星光倾向', () => play('song')],
       ['摸摸头', '♥', '甜蜜倾向', () => play('pat')], ['跳舞', '✦', '快乐加倍', () => play('dance')],
@@ -360,6 +401,7 @@ function menuOptions() {
     ];
     case 'settings': return [
       ['改名字', '✎', '给它新称呼', () => open('rename')], [state.sound ? '声音：开' : '声音：关', '♫', '切换提示音', () => { state.sound = !state.sound; saveState(); render(); beep(); }],
+      ['变异图鉴', '✦', `已发现 ${state.discovered.length} / ${MUTATIONS.length}`, () => open('catalog')],
       ['重新领养', '✿', '清除当前进度', () => open('reset')], ['返回', '↶', '回到主页', () => open('home')]
     ];
     case 'reset': return [
@@ -374,6 +416,7 @@ function open(next) {
   if (next !== 'home') { interaction = null; lastMotion = ''; }
   view = next; selection = 0;
   if (next === 'status') statusPage = 0;
+  if (next === 'catalog') catalogPage = 0;
   render();
 }
 function menuMarkup(title) {
@@ -406,12 +449,21 @@ function statusMarkup() {
   const stage = stageIndex();
   const next = STAGES[stage + 1]?.xp;
   const progress = next ? Math.min(100, Math.round((state.xp - STAGES[stage].xp) / (next - STAGES[stage].xp) * 100)) : 100;
-  const dominant = MUTATIONS.slice().sort((a, b) => state.traits[b.id] - state.traits[a.id]).slice(0, 2);
+  const dominant = TRAITS.slice().sort((a, b) => state.traits[b.id] - state.traits[a.id]).slice(0, 2);
   if (statusPage === 1) {
     const maxTrait = Math.max(12, ...Object.values(state.traits));
-    return `<div class="status-view"><div class="pixel-panel"><div class="panel-title">变异图鉴 <small>2 / 2</small></div><div class="trait-line">当前形态：<b>${state.form ? MUTATION_BY_ID[state.form].name : '普通形态'}</b><br>少年期后，最高倾向达 12 就会变化。</div><div class="stat-list">${MUTATIONS.map(item => `<div class="stat-line trait-stat"><span>${item.icon}</span><div class="stat-track"><i style="width:${Math.round(state.traits[item.id] / maxTrait * 100)}%;background:${item.cheek}"></i></div><strong>${Math.floor(state.traits[item.id])}</strong></div>`).join('')}</div><div class="trait-line">${dominant.map(item => `${item.icon} ${item.name}`).join('、')}倾向领先。食物、陪玩和旅行会改变倾向。</div><div class="back-choice">◀ ▶ 换页　● 返回</div></div></div>`;
+    return `<div class="status-view"><div class="pixel-panel"><div class="panel-title">变异倾向 <small>2 / 2</small></div><div class="trait-line">当前形态：<b>${state.form ? MUTATION_BY_ID[state.form].name : '普通形态'}</b>　已发现 ${state.discovered.length}/${MUTATIONS.length}<br>少年期后，最高倾向达 12 可变异。</div><div class="stat-list">${TRAITS.map(item => `<div class="stat-line trait-stat"><span>${item.icon}</span><div class="stat-track"><i style="width:${Math.round(state.traits[item.id] / maxTrait * 100)}%;background:${item.color}"></i></div><strong>${Math.floor(state.traits[item.id])}</strong></div>`).join('')}</div><div class="trait-line">${dominant.map(item => `${item.icon} ${item.name}`).join('、')}倾向领先。每照顾 8 次会抽取新形态。</div><div class="back-choice">◀ ▶ 换页　● 返回</div></div></div>`;
   }
   return `<div class="status-view"><div class="pixel-panel"><div class="panel-title">成长档案 <small>1 / 2</small></div><div class="profile-summary"><canvas class="tiny-pet" data-pet="${esc(state.petId)}" width="16" height="16"></canvas><div><b>${esc(state.name)} · ${esc(pet.title)}</b>${STAGES[stage].name}期 · 第 ${dayNumber()} 天<br>成长 ${Math.floor(state.xp)} / ${next || 'MAX'}　星币 ${state.coins}</div></div><div class="xp-track"><i style="width:${progress}%"></i></div><div class="stat-list">${Object.entries(STAT_NAMES).map(([key, label]) => `<div class="stat-line"><span>${label}</span><div class="stat-track"><i style="width:${state.stats[key]}%;background:${STAT_COLORS[key]}"></i></div><strong>${Math.round(state.stats[key])}</strong></div>`).join('')}</div><div class="back-choice">◀ ▶ 看变异　● 返回</div></div></div>`;
+}
+function catalogMarkup() {
+  const perPage = 4;
+  const pages = Math.ceil(MUTATIONS.length / perPage);
+  const items = MUTATIONS.slice(catalogPage * perPage, (catalogPage + 1) * perPage);
+  return `<div class="status-view catalog-view"><div class="pixel-panel"><div class="panel-title">变异图鉴 <small>${catalogPage + 1} / ${pages}</small></div><div class="catalog-progress">已发现 ${state.discovered.length}/${MUTATIONS.length} · 稀有形态随机出现</div><div class="catalog-list">${items.map(form => {
+    const found = state.discovered.includes(form.id);
+    return `<div class="catalog-entry ${state.form === form.id ? 'current' : ''}"><span class="catalog-icon">${found ? form.icon : '?'}</span><span><b>${found ? esc(form.name) : '尚未发现'}</b><small>${found ? `${TRAIT_BY_ID[form.trait].name} · ${form.rarity}${form.wild ? ' · 随机' : ''}` : '继续照顾小伙伴来发现'}</small></span></div>`;
+  }).join('')}</div><div class="back-choice">◀ ▶ 翻页　● 返回设置</div></div></div>`;
 }
 function diaryMarkup() {
   const entries = state.diary.slice(diaryPage * 4, diaryPage * 4 + 4);
@@ -435,13 +487,14 @@ function resultMarkup() {
   return `<div class="game-view"><div class="pixel-panel"><div class="panel-title">游戏结果 <small>✦</small></div><div class="portrait" style="font-size:76px;text-align:center;color:#e9a0b0">${game.win ? '★' : '♡'}</div><div class="game-result">${esc(game.message)}</div><div class="hint-small" style="text-align:center">星币 ${state.coins} · 成长 ${Math.floor(state.xp)}</div><div class="back-choice">● 返回游戏菜单</div></div></div>`;
 }
 function render() {
-  $('#screenTitle').textContent = !state ? '领养小伙伴' : view === 'home' ? `${state.name} · ${STAGES[stageIndex()].name}期` : ({ care: '照顾', food: '食物', play: '陪玩', places: '出门', games: '游戏', status: '状态', diary: '日记', settings: '设置', reset: '重新领养', rename: '改名字', box: '猜宝箱', rhythm: '节奏拍拍', result: '游戏结果' }[view] || '口袋小伙伴');
+  $('#screenTitle').textContent = !state ? '领养小伙伴' : view === 'home' ? `${state.name} · ${STAGES[stageIndex()].name}期` : ({ care: '照顾', food: '食物', play: '陪玩', places: '出门', games: '游戏', status: '状态', catalog: '变异图鉴', diary: '日记', settings: '设置', reset: '重新领养', rename: '改名字', box: '猜宝箱', rhythm: '节奏拍拍', result: '游戏结果' }[view] || '口袋小伙伴');
   $('#screenMeta').textContent = state ? `✦ ${state.coins}` : '✦ 欢迎';
-  $('#screenHint').textContent = view === 'rhythm' ? '◀ 退出 · ● 拍下 · ▶ 重试' : view === 'diary' || view === 'status' ? '◀ ▶ 翻页 · ● 返回' : '◀ ▶ 选择 · ● 确认';
+  $('#screenHint').textContent = view === 'rhythm' ? '◀ 退出 · ● 拍下 · ▶ 重试' : view === 'diary' || view === 'status' || view === 'catalog' ? '◀ ▶ 翻页 · ● 返回' : '◀ ▶ 选择 · ● 确认';
   let markup;
   if (view === 'adopt') markup = adoptMarkup();
   else if (view === 'home') markup = homeMarkup();
   else if (view === 'status') markup = statusMarkup();
+  else if (view === 'catalog') markup = catalogMarkup();
   else if (view === 'diary') markup = diaryMarkup();
   else if (view === 'rename') markup = renameMarkup();
   else if (view === 'box') markup = boxMarkup();
@@ -458,6 +511,7 @@ function render() {
 function move(delta) {
   if (view === 'rhythm') { if (delta < 0) { stopRhythm(); open('games'); } else startRhythmGame(); return; }
   if (view === 'status') { statusPage = (statusPage + 1) % 2; render(); beep(); return; }
+  if (view === 'catalog') { catalogPage = (catalogPage + delta + Math.ceil(MUTATIONS.length / 4)) % Math.ceil(MUTATIONS.length / 4); render(); beep(); return; }
   if (view === 'result' || view === 'rename') return;
   if (view === 'diary') { diaryPage = (diaryPage + delta + Math.max(1, Math.ceil(state.diary.length / 4))) % Math.max(1, Math.ceil(state.diary.length / 4)); render(); beep(); return; }
   const count = view === 'adopt' ? PETS.length : view === 'box' ? 3 : menuOptions().length;
@@ -467,10 +521,11 @@ function move(delta) {
 function confirmChoice() {
   if (view === 'adopt') {
     const pet = PETS[selection], now = Date.now();
-    state = { petId: pet.id, name: pet.name, bornAt: now, lastUpdated: now, stats: { hunger: 82, happy: 85, clean: 90, energy: 88, health: 100 }, xp: 0, traits: newTraits(), form: null, coins: 30, place: 'home', sleeping: false, sleepSince: null, sound: true, careCount: 0, diary: [] };
+    state = { petId: pet.id, name: pet.name, bornAt: now, lastUpdated: now, stats: { hunger: 82, happy: 85, clean: 90, energy: 88, health: 100 }, xp: 0, traits: newTraits(), form: null, discovered: [], lastMutationCare: 0, coins: 30, place: 'home', sleeping: false, sleepSince: null, sound: true, careCount: 0, diary: [] };
     log(`乌沙奇和${state.name}相遇啦！`, '♥'); saveState(); open('home'); toast(`欢迎回家，${state.name}！`); beep(); return;
   }
   if (view === 'status' || view === 'diary') { open('home'); beep(); return; }
+  if (view === 'catalog') { open('settings'); beep(); return; }
   if (view === 'rename') {
     const name = safeName($('#nameInput').value, state.name);
     state.name = name; log(`乌沙奇给小伙伴取了新名字：${name}。`, '✎'); saveState(); open('settings'); toast('名字保存好啦'); beep(); return;

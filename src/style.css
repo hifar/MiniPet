@@ -57,6 +57,14 @@
 .effect-cuddle span,.effect-snack span{color:#f391ae;text-shadow:1px 2px #fff3dc}
 .effect-sleep span{color:#dad1fb;text-shadow:1px 2px #776d9b}
 .effect-chase span:first-child{color:#ed9bb7;animation:action-ball .95s ease-in-out infinite}
+.catalog-progress{font-size:9px;color:#987c94;font-weight:900;margin:5px 0 3px}
+.catalog-list{flex:1;min-height:0;display:grid;grid-template-rows:repeat(4,1fr);gap:3px}
+.catalog-entry{min-height:0;display:flex;align-items:center;gap:7px;padding:2px 5px;background:#f7efdf;border:2px solid #ddd0c5;color:#a795a1}
+.catalog-entry.current{border-color:#e09ab6;background:#fff0db}
+.catalog-icon{width:22px;flex:none;text-align:center;color:#e6a5b5;font-size:18px;font-weight:900}
+.catalog-entry b{display:block;font-size:10px;color:#765f78;line-height:1.2}
+.catalog-entry small{display:block;font-size:8px;line-height:1.2}
+.catalog-view .back-choice{margin-top:4px}
 @keyframes pet-breathe{50%{transform:translate(-50%,-5px) scale(1.03,.97)}}
 @keyframes pet-hoppy{45%{transform:translate(-50%,-10px) rotate(-4deg)}55%{transform:translate(-50%,-10px) rotate(4deg)}}
 @keyframes pet-stargaze{50%{transform:translate(-50%,-7px) rotate(6deg)}}
@@ -131,4 +139,5 @@
 }
 @media(max-width:600px),(max-width:1000px) and (orientation:landscape){.usagi-stage{width:67px;height:67px}}
 @media(max-width:600px) and (max-height:520px),(max-width:1000px) and (orientation:landscape) and (max-height:520px){.usagi-stage{width:52px;height:52px}}
+@media(max-width:600px) and (max-height:520px),(max-width:1000px) and (orientation:landscape) and (max-height:520px){.catalog-progress{font-size:7px;margin:2px 0}.catalog-list{gap:1px}.catalog-entry{padding:0 2px;border-width:1px}.catalog-icon{font-size:13px;width:15px}.catalog-entry b{font-size:8px}.catalog-entry small{font-size:7px}.catalog-view .back-choice{margin-top:2px}}
 @media(prefers-reduced-motion:reduce){.pet-stage,.usagi-stage,.action-effects span{animation-duration:.01ms!important;animation-iteration-count:1!important}}
